@@ -171,7 +171,7 @@ contract MockStrategy is BaseStrategy {
 
     function _deploy(uint256 assets) internal override returns (uint256) {
         _deployed += assets;
-        return totalAssets();
+        return _deployed;
     }
 
     function _liquidate(uint256 assets) internal override returns (uint256) {

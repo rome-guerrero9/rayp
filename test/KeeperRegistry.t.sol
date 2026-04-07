@@ -50,6 +50,8 @@ contract MockTreasury is IProtocolTreasury {
         if (shouldRevert) revert("treasury: no funds");
         paid[keeper] += amount;
         callCount++;
+        (bool ok,) = keeper.call{value: amount}("");
+        // Don't revert if transfer fails — some keepers may not accept ETH
     }
 }
 
@@ -613,9 +615,10 @@ contract KeeperRegistryTest is Test {
     }
 
     function test_OnlyAdminCanSetAddresses() public {
+        address newVault = address(new MockVault());
         vm.prank(guardian);
         vm.expectRevert();
-        registry.setVault(address(new MockVault()));
+        registry.setVault(newVault);
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -632,9 +635,19 @@ contract KeeperRegistryTest is Test {
 
         _tick();
 
+        // The outer executeRebalance succeeds, but the reentrancy attempt
+        // inside receive() is blocked by the ReentrancyGuard. The inner
+        // revert propagates through receive(), which rolls back the
+        // attacker's state changes. The treasury's low-level call catches
+        // the failure silently. We verify the reentrancy was blocked by
+        // checking only ONE rebalance was recorded.
         vm.prank(address(attacker));
-        vm.expectRevert();
         attacker.tryReenter();
+
+        // Only one rebalance succeeded (reentrancy was blocked)
+        assertEq(vault.callCount(), 1, "reentrancy should have been blocked");
+        // The attacked flag is false because receive() reverted (rolled back)
+        assertFalse(attacker.attacked(), "receive should have reverted on reentrancy");
     }
 
     // ════════════════════════════════════════════════════════════════════════

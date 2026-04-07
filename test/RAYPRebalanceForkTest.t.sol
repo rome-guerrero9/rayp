@@ -447,7 +447,12 @@ contract RAYPRebalanceForkTest is Test {
     function setUp() public {
         // Fork Arbitrum at a recent stable block
         // Set ARBITRUM_RPC in your .env file
-        // vm.createSelectFork(vm.envString("ARBITRUM_RPC"), 200_000_000);
+        string memory rpc = vm.envOr("ARBITRUM_RPC", string(""));
+        if (bytes(rpc).length == 0) {
+            vm.skip(true);
+        } else {
+            vm.createSelectFork(rpc, 200_000_000);
+        }
 
         weth = IERC20(WETH);
 

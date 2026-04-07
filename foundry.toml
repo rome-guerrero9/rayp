@@ -11,5 +11,9 @@ remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
 
+[rpc_endpoints]
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC}"
+arbitrum = "${ARBITRUM_RPC}"
+
 [profile.default.fuzz]
 runs = 256

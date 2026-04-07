@@ -396,6 +396,10 @@ contract OracleAggregator is AccessControl, Pausable {
         require(answeredInRound >= roundId, "CL: incomplete round");
 
         uint256 maxAge = f.heartbeat * STALENESS_MULTIPLIER;
+        if (updatedAt > block.timestamp) {
+            emit StalenessBreach("chainlink", updatedAt, maxAge);
+            revert StaleOracle("chainlink");
+        }
         if (block.timestamp - updatedAt > maxAge) {
             emit StalenessBreach("chainlink", updatedAt, maxAge);
             revert StaleOracle("chainlink");
@@ -419,6 +423,10 @@ contract OracleAggregator is AccessControl, Pausable {
         require(answeredInRound >= roundId, "CL: incomplete round");
 
         uint256 maxAge = f.heartbeat * STALENESS_MULTIPLIER;
+        if (updatedAt > block.timestamp) {
+            emit StalenessBreach("chainlink-funding", updatedAt, maxAge);
+            revert StaleOracle("chainlink-funding");
+        }
         if (block.timestamp - updatedAt > maxAge) {
             emit StalenessBreach("chainlink-funding", updatedAt, maxAge);
             revert StaleOracle("chainlink-funding");
@@ -459,6 +467,8 @@ contract OracleAggregator is AccessControl, Pausable {
             // sqrt(365) ≈ 19.1 (scaled by 1e9 for integer math)
             uint256 dailySigma = (uint256(pp.conf) * 1e18) / uint256(uint64(pp.price));
             vol18 = (dailySigma * 191_000_000) / 1e7; // × sqrt(365) × 1e18
+            if (vol18 > VOL_CEILING) vol18 = VOL_CEILING;
+            if (vol18 < VOL_FLOOR) vol18 = VOL_FLOOR;
         }
     }
 

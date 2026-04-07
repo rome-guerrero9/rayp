@@ -214,6 +214,8 @@ contract RAYPVault is AccessControl, Pausable, ReentrancyGuard {
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(GUARDIAN_ROLE,      _guardian);
+        _setRoleAdmin(KEEPER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(GUARDIAN_ROLE, DEFAULT_ADMIN_ROLE);
     }
 
     // ─── ERC-4626: deposit ────────────────────────────────────────────────────
