@@ -10,5 +10,23 @@ out/
 # Docs
 docs/
 
-# Dotenv file
+# Environment and secrets
 .env
+.env.*
+!.env.example
+
+# Private keys and credentials
+*.pem
+*.key
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node (if using npm scripts)
+node_modules/
