@@ -1,0 +1,49 @@
+[
+  {
+    "type": "function",
+    "name": "confirmedRegime",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint8" }]
+  },
+  {
+    "type": "function",
+    "name": "pendingRegime",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint8" }]
+  },
+  {
+    "type": "function",
+    "name": "confirmationCount",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint8" }]
+  },
+  {
+    "type": "function",
+    "name": "rebalanceCount",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint64" }]
+  },
+  {
+    "type": "function",
+    "name": "regimeLabel",
+    "stateMutability": "pure",
+    "inputs": [{ "name": "r", "type": "uint8" }],
+    "outputs": [{ "name": "", "type": "string" }]
+  },
+  {
+    "type": "event",
+    "name": "RegimeConfirmed",
+    "anonymous": false,
+    "inputs": [
+      { "name": "newRegime", "type": "uint8", "indexed": true },
+      { "name": "oldRegime", "type": "uint8", "indexed": true },
+      { "name": "confirmationsRequired", "type": "uint8", "indexed": false },
+      { "name": "forcedByGuardian", "type": "bool", "indexed": false },
+      { "name": "triggeredByVolFloor", "type": "bool", "indexed": false }
+    ]
+  }
+]

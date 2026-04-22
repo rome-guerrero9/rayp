@@ -33,3 +33,6 @@ Thumbs.db
 
 # Node (if using npm scripts)
 node_modules/
+
+# Local memory / session state
+.remember/

@@ -1,0 +1,53 @@
+[
+  {
+    "type": "function",
+    "name": "getSnapshot",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "snap",
+        "type": "tuple",
+        "components": [
+          { "name": "price", "type": "uint256" },
+          { "name": "smoothedVol", "type": "uint256" },
+          { "name": "fundingRate", "type": "int256" },
+          { "name": "stableDominance", "type": "uint256" },
+          { "name": "timestamp", "type": "uint40" },
+          { "name": "volPenaltyFlag", "type": "bool" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "lastSnapshot",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "price", "type": "uint256" },
+      { "name": "smoothedVol", "type": "uint256" },
+      { "name": "fundingRate", "type": "int256" },
+      { "name": "stableDominance", "type": "uint256" },
+      { "name": "timestamp", "type": "uint40" },
+      { "name": "volPenaltyFlag", "type": "bool" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "peekTwap",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "smoothedVol", "type": "uint256" },
+      { "name": "slotsPopulated", "type": "uint8" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "divergenceActive",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "bool" }]
+  }
+]

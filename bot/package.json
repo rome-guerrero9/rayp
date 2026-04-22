@@ -1,0 +1,26 @@
+{
+  "name": "rayp-regime-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Daily Twitter bot that posts the RAYP regime signal from Arbitrum Sepolia.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dry-run": "tsx src/index.ts --dry-run",
+    "read": "tsx src/index.ts --read-only",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "twitter-api-v2": "^1.18.2",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
