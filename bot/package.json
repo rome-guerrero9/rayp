@@ -2,7 +2,7 @@
   "name": "rayp-regime-bot",
   "version": "0.1.0",
   "private": true,
-  "description": "Daily Twitter bot that posts the RAYP regime signal from Arbitrum Sepolia.",
+  "description": "Daily Bluesky bot that posts the RAYP regime signal from Arbitrum Sepolia.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -14,8 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@atproto/api": "^0.13.0",
     "dotenv": "^16.4.5",
-    "twitter-api-v2": "^1.18.2",
     "viem": "^2.21.0"
   },
   "devDependencies": {
