@@ -1,6 +1,6 @@
 import { ADDRESSES, regimeLabel, type OracleSnapshot } from "./contracts.js";
 
-export const TWEET_MAX = 280;
+export const POST_MAX = 300;
 
 const EMOJI: Record<string, string> = {
   NEUTRAL: "🟢",
@@ -53,14 +53,14 @@ export interface FormatInput {
 }
 
 /**
- * Pure function: builds a tweet ≤ 280 chars describing the current regime and
+ * Pure function: builds a post ≤ 300 chars describing the current regime and
  * oracle snapshot. If the full message overflows, the Arbiscan line is dropped
  * first (per spec). Further overflow is guarded by a final hard trim.
  *
  * When `snapshot` is null (aggregator reverted off-chain), the metrics line is
  * replaced with an "oracle unavailable" notice and the regime is still posted.
  */
-export function formatTweet(input: FormatInput): string {
+export function formatPost(input: FormatInput): string {
   const { snapshot, currentRegime, previousRegime, isTransition, now } = input;
 
   const label = regimeLabel(currentRegime);
@@ -88,7 +88,7 @@ export function formatTweet(input: FormatInput): string {
     `${transitionBlock}\n\n` +
     `${link}`;
 
-  if (full.length <= TWEET_MAX) return full;
+  if (full.length <= POST_MAX) return full;
 
   // Overflow: drop the Arbiscan line first.
   const withoutLink =
@@ -97,8 +97,8 @@ export function formatTweet(input: FormatInput): string {
     `${metricsLine}` +
     `${transitionBlock}`;
 
-  if (withoutLink.length <= TWEET_MAX) return withoutLink;
+  if (withoutLink.length <= POST_MAX) return withoutLink;
 
   // Extreme overflow safety net: hard trim.
-  return withoutLink.slice(0, TWEET_MAX);
+  return withoutLink.slice(0, POST_MAX);
 }

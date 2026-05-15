@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { TwitterApi } from "twitter-api-v2";
+import { AtpAgent, RichText } from "@atproto/api";
 
 import {
   makeClient,
@@ -10,7 +10,7 @@ import {
   readVaultRebalanceCount,
   regimeLabel,
 } from "./contracts.js";
-import { formatTweet, TWEET_MAX } from "./format.js";
+import { formatPost, POST_MAX } from "./format.js";
 import { readState, writeState } from "./state.js";
 
 const args = new Set(process.argv.slice(2));
@@ -23,17 +23,12 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function getTwitterClient(): TwitterApi {
-  const apiKey = requireEnv("TWITTER_API_KEY");
-  const apiSecret = requireEnv("TWITTER_API_SECRET");
-  const accessToken = requireEnv("TWITTER_ACCESS_TOKEN");
-  const accessSecret = requireEnv("TWITTER_ACCESS_SECRET");
-  return new TwitterApi({
-    appKey: apiKey,
-    appSecret: apiSecret,
-    accessToken,
-    accessSecret,
-  });
+async function getBlueskyAgent(): Promise<AtpAgent> {
+  const identifier = requireEnv("BLUESKY_IDENTIFIER");
+  const password = requireEnv("BLUESKY_APP_PASSWORD");
+  const agent = new AtpAgent({ service: "https://bsky.social" });
+  await agent.login({ identifier, password });
+  return agent;
 }
 
 async function main(): Promise<void> {
@@ -84,27 +79,34 @@ async function main(): Promise<void> {
   const isTransition =
     state.lastRegime !== null && state.lastRegime !== confirmedRegime;
 
-  const tweet = formatTweet({
+  const postText = formatPost({
     snapshot,
     currentRegime: confirmedRegime,
     previousRegime: state.lastRegime,
     isTransition,
   });
 
-  console.log(`── Composed tweet (${tweet.length}/${TWEET_MAX} chars) ──`);
-  console.log(tweet);
+  console.log(`── Composed post (${postText.length}/${POST_MAX} chars) ──`);
+  console.log(postText);
   console.log("─".repeat(40));
 
   if (DRY_RUN) {
-    console.log("[dry-run] Skipping Twitter post and state write.");
+    console.log("[dry-run] Skipping Bluesky post and state write.");
     return;
   }
 
-  // ── Post to Twitter ───────────────────────────────────────────────────────
-  const twitter = getTwitterClient();
-  const result = await twitter.v2.tweet(tweet);
-  const tweetId = result.data?.id ?? "<unknown>";
-  console.log(`Posted tweet id=${tweetId}`);
+  // ── Post to Bluesky ───────────────────────────────────────────────────────
+  // RichText.detectFacets auto-links URLs in the body (e.g. the Arbiscan line)
+  // so they render as clickable in Bluesky clients.
+  const agent = await getBlueskyAgent();
+  const rt = new RichText({ text: postText });
+  await rt.detectFacets(agent);
+  const result = await agent.post({
+    text: rt.text,
+    facets: rt.facets,
+    createdAt: new Date().toISOString(),
+  });
+  console.log(`Posted to Bluesky: ${result.uri}`);
 
   // ── Persist state ─────────────────────────────────────────────────────────
   await writeState({
