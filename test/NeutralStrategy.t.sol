@@ -113,7 +113,7 @@ contract NeutralStrategyTest is Test {
         uint256 before = strategy.totalAssets();
 
         vm.prank(vault);
-        uint256 after_ = strategy.harvestAndReport();
+        uint256 after_ = strategy.harvestAndReport(1);
 
         assertGt(after_, before);
     }

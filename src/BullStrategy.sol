@@ -37,6 +37,11 @@ contract BullStrategy is BaseStrategy {
     uint256 public constant  MIN_HEALTH_FACTOR      = 1.3e18;
     uint256 public constant  STALENESS_THRESHOLD    = 7200;
     uint256 public constant  SWAP_SLIPPAGE_BPS      = 50;
+    /// @notice Slippage tolerance for oracle-derived swap minimums. Wider than
+    ///         SWAP_SLIPPAGE_BPS: it absorbs Chainlink/Uniswap spot drift
+    ///         (heartbeat lag + AMM divergence). A strategy that reverts during a
+    ///         rebalance is worse than the slippage it would have prevented.
+    uint256 public constant  ORACLE_SWAP_SLIPPAGE_BPS = 100; // 1.0%
     uint256 public constant  FLASH_FEE_BUFFER_BPS   = 10;
 
     // Pre-computed scaling factors
@@ -202,13 +207,14 @@ contract BullStrategy is BaseStrategy {
     }
 
     function _flashDeploy(uint256 usdcAmount, uint256 premium) internal returns (bool) {
+        uint256 minWethOut = (_usdcToWeth(usdcAmount) * (10_000 - ORACLE_SWAP_SLIPPAGE_BPS)) / 10_000;
         uint256 wethReceived = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({
             tokenIn:           address(usdc),
             tokenOut:          asset,
             fee:               swapFeeTier,
             recipient:         address(this),
             amountIn:          usdcAmount,
-            amountOutMinimum:  0,
+            amountOutMinimum:  minWethOut,
             sqrtPriceLimitX96: 0
         }));
 
@@ -265,18 +271,22 @@ contract BullStrategy is BaseStrategy {
 
     // ─── Harvest ──────────────────────────────────────────────────────────────
 
-    function _harvestRewards() internal override returns (uint256 yieldHarvested) {
+    /**
+     * @param minRewardOut  Minimum WETH out of the reward swap — a keeper-supplied
+     *                      slippage floor. If 0, rewards are claimed but NOT
+     *                      swapped (deferred to a slippage-protected harvest);
+     *                      this is how the rebalance-path harvest stays safe.
+     */
+    function _harvestRewards(uint256 minRewardOut) internal override returns (uint256 yieldHarvested) {
         address[] memory tokens = new address[](2);
         tokens[0] = address(aWETH);
         tokens[1] = address(debtUSDC);
+        aaveRewards.claimAllRewards(tokens, address(this));
 
-        (, uint256[] memory amounts) = aaveRewards.claimAllRewards(tokens, address(this));
+        if (minRewardOut == 0) return 0; // claim-only; swap deferred to a protected harvest
 
-        uint256 rewardAmount = 0;
-        for (uint256 i = 0; i < amounts.length; i++) {
-            rewardAmount += amounts[i];
-        }
-        if (rewardAmount == 0) return 0;
+        uint256 rewardBalance = rewardToken.balanceOf(address(this));
+        if (rewardBalance == 0) return 0;
 
         uint256 wethBefore = IERC20(asset).balanceOf(address(this));
 
@@ -285,8 +295,8 @@ contract BullStrategy is BaseStrategy {
             tokenOut:          asset,
             fee:               SWAP_FEE_TIER_HARVEST,
             recipient:         address(this),
-            amountIn:          rewardAmount,
-            amountOutMinimum:  0,
+            amountIn:          rewardBalance,
+            amountOutMinimum:  minRewardOut,
             sqrtPriceLimitX96: 0
         }));
 

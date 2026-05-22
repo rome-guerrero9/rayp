@@ -89,14 +89,20 @@ abstract contract AaveMoneyMarketStrategy is BaseStrategy {
         totalDeposited = 0;
     }
 
-    function _harvestRewards() internal override returns (uint256 yieldHarvested) {
+    /**
+     * @param minRewardOut  Minimum asset (WETH) out of the reward swap — a
+     *                      keeper-supplied slippage floor. If 0, rewards are
+     *                      claimed but NOT swapped (deferred to a protected harvest).
+     */
+    function _harvestRewards(uint256 minRewardOut) internal override returns (uint256 yieldHarvested) {
         address[] memory aTokens = new address[](1);
         aTokens[0] = address(aToken);
+        aaveRewards.claimAllRewards(aTokens, address(this));
 
-        (, uint256[] memory amounts) = aaveRewards.claimAllRewards(aTokens, address(this));
+        if (minRewardOut == 0) return 0; // claim-only; swap deferred to a protected harvest
 
-        uint256 rewardAmount = amounts.length > 0 ? amounts[0] : 0;
-        if (rewardAmount < MIN_HARVEST_USD / 100) return 0;
+        uint256 rewardBalance = rewardToken.balanceOf(address(this));
+        if (rewardBalance < MIN_HARVEST_USD / 100) return 0;
 
         uint256 assetsBefore = IERC20(asset).balanceOf(address(this));
 
@@ -105,8 +111,8 @@ abstract contract AaveMoneyMarketStrategy is BaseStrategy {
             tokenOut:          asset,
             fee:               SWAP_FEE_TIER,
             recipient:         address(this),
-            amountIn:          rewardAmount,
-            amountOutMinimum:  0,
+            amountIn:          rewardBalance,
+            amountOutMinimum:  minRewardOut,
             sqrtPriceLimitX96: 0
         }));
 

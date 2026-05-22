@@ -31,7 +31,12 @@ contract BearStrategy is BaseStrategy {
 
     uint256 public constant MIN_HARVEST_USD      = 10e18;
     uint256 public constant STALENESS_THRESHOLD  = 7200;
-    uint256 public constant SWAP_SLIPPAGE_BPS    = 50;   // 0.5% buffer
+    uint256 public constant SWAP_SLIPPAGE_BPS    = 50;   // 0.5% buffer (input sizing)
+    /// @notice Slippage tolerance for oracle-derived swap minimums. Wider than
+    ///         SWAP_SLIPPAGE_BPS: it absorbs Chainlink/Uniswap spot drift
+    ///         (heartbeat lag + AMM divergence). A strategy that reverts during a
+    ///         rebalance is worse than the slippage it would have prevented.
+    uint256 public constant ORACLE_SWAP_SLIPPAGE_BPS = 100; // 1.0%
     uint256 public constant HEALTH_MIN_RATIO_BPS = 9900; // 99%
 
     // Pre-computed scaling factors (set in constructor, avoids runtime EXP)
@@ -104,13 +109,14 @@ contract BearStrategy is BaseStrategy {
     // ─── Core strategy functions ──────────────────────────────────────────────
 
     function _deploy(uint256 assets) internal override returns (uint256 deployedTotal) {
+        uint256 minUsdcOut = (_wethToUsdc(assets) * (10_000 - ORACLE_SWAP_SLIPPAGE_BPS)) / 10_000;
         uint256 usdcReceived = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({
             tokenIn:           asset,
             tokenOut:          address(usdc),
             fee:               swapFeeTier,
             recipient:         address(this),
             amountIn:          assets,
-            amountOutMinimum:  0,
+            amountOutMinimum:  minUsdcOut,
             sqrtPriceLimitX96: 0
         }));
 
@@ -128,13 +134,14 @@ contract BearStrategy is BaseStrategy {
 
         uint256 usdcWithdrawn = aavePool.withdraw(address(usdc), usdcNeeded, address(this));
 
+        uint256 minWethOut = (_usdcToWeth(usdcWithdrawn) * (10_000 - ORACLE_SWAP_SLIPPAGE_BPS)) / 10_000;
         assetsOut = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({
             tokenIn:           address(usdc),
             tokenOut:          asset,
             fee:               swapFeeTier,
             recipient:         address(this),
             amountIn:          usdcWithdrawn,
-            amountOutMinimum:  0,
+            amountOutMinimum:  minWethOut,
             sqrtPriceLimitX96: 0
         }));
 
@@ -149,27 +156,35 @@ contract BearStrategy is BaseStrategy {
 
         uint256 usdcWithdrawn = aavePool.withdraw(address(usdc), type(uint256).max, address(this));
 
+        uint256 minWethOut = (_usdcToWeth(usdcWithdrawn) * (10_000 - ORACLE_SWAP_SLIPPAGE_BPS)) / 10_000;
         assetsOut = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({
             tokenIn:           address(usdc),
             tokenOut:          asset,
             fee:               swapFeeTier,
             recipient:         address(this),
             amountIn:          usdcWithdrawn,
-            amountOutMinimum:  0,
+            amountOutMinimum:  minWethOut,
             sqrtPriceLimitX96: 0
         }));
 
         totalDepositedUSDC = 0;
     }
 
-    function _harvestRewards() internal override returns (uint256 yieldHarvested) {
+    /**
+     * @param minRewardOut  Minimum USDC out of the reward swap — a keeper-supplied
+     *                      slippage floor. If 0, rewards are claimed but NOT
+     *                      swapped (deferred to a slippage-protected harvest);
+     *                      this is how the rebalance-path harvest stays safe.
+     */
+    function _harvestRewards(uint256 minRewardOut) internal override returns (uint256 yieldHarvested) {
         address[] memory tokens = new address[](1);
         tokens[0] = address(aUSDC);
+        aaveRewards.claimAllRewards(tokens, address(this));
 
-        (, uint256[] memory amounts) = aaveRewards.claimAllRewards(tokens, address(this));
+        if (minRewardOut == 0) return 0; // claim-only; swap deferred to a protected harvest
 
-        uint256 rewardAmount = amounts.length > 0 ? amounts[0] : 0;
-        if (rewardAmount < MIN_HARVEST_USD / 100) return 0;
+        uint256 rewardBalance = rewardToken.balanceOf(address(this));
+        if (rewardBalance < MIN_HARVEST_USD / 100) return 0;
 
         uint256 usdcBefore = usdc.balanceOf(address(this));
 
@@ -178,8 +193,8 @@ contract BearStrategy is BaseStrategy {
             tokenOut:          address(usdc),
             fee:               SWAP_FEE_TIER_HARVEST,
             recipient:         address(this),
-            amountIn:          rewardAmount,
-            amountOutMinimum:  0,
+            amountIn:          rewardBalance,
+            amountOutMinimum:  minRewardOut,
             sqrtPriceLimitX96: 0
         }));
 

@@ -116,7 +116,7 @@ contract MockStrategy {
         return bal;
     }
 
-    function harvestAndReport() external returns (uint256) {
+    function harvestAndReport(uint256) external returns (uint256) {
         return totalAssets();
     }
 

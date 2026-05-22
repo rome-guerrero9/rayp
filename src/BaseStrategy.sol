@@ -191,13 +191,13 @@ abstract contract BaseStrategy is IStrategy {
      * @dev INV-5: never reverts. Harvest failures are caught and emitted.
      *      Calls _harvestRewards() for protocol-specific reward logic.
      */
-    function harvestAndReport()
+    function harvestAndReport(uint256 minRewardOut)
         external
         override
         onlyVault
         returns (uint256 assetsAfterHarvest)
     {
-        try this._harvestRewardsExternal() returns (uint256 yieldHarvested) {
+        try this._harvestRewardsExternal(minRewardOut) returns (uint256 yieldHarvested) {
             lastHarvestTimestamp = uint40(block.timestamp);
             assetsAfterHarvest   = totalAssets();
             emit Harvested(yieldHarvested, assetsAfterHarvest, uint40(block.timestamp));
@@ -213,9 +213,9 @@ abstract contract BaseStrategy is IStrategy {
      *         harvestAndReport(). Not callable externally (enforced by access
      *         control in the implementing contract or via onlySelf).
      */
-    function _harvestRewardsExternal() external returns (uint256 yieldHarvested) {
+    function _harvestRewardsExternal(uint256 minRewardOut) external returns (uint256 yieldHarvested) {
         require(msg.sender == address(this), "only self");
-        return _harvestRewards();
+        return _harvestRewards(minRewardOut);
     }
 
     // ─── IStrategy: healthCheck ───────────────────────────────────────────────
@@ -348,9 +348,11 @@ abstract contract BaseStrategy is IStrategy {
 
     /**
      * @notice Claim and compound all pending rewards back into the underlying.
+     * @param  minRewardOut    Keeper-supplied slippage floor for the reward swap.
+     *                         If 0, rewards are claimed but not swapped.
      * @return yieldHarvested  Amount of underlying added from rewards.
      */
-    function _harvestRewards() internal virtual returns (uint256 yieldHarvested);
+    function _harvestRewards(uint256 minRewardOut) internal virtual returns (uint256 yieldHarvested);
 
     /**
      * @notice Protocol-specific health assertions.

@@ -189,7 +189,8 @@ contract MockStrategy is BaseStrategy {
         }
     }
 
-    function _harvestRewards() internal override returns (uint256) {
+    function _harvestRewards(uint256 minRewardOut) internal override returns (uint256) {
+        if (minRewardOut == 0) return 0; // claim-only; mirrors real strategy semantics
         MockERC20(asset).mint(address(this), 1e18); // 1 token yield
         _deployed += 1e18;
         return 1e18;
@@ -301,7 +302,7 @@ contract StrategyInvariantTest is Test {
     function test_INV5_HarvestNeverReverts() public {
         // Even with nothing deposited, harvest should not revert
         vm.prank(vault);
-        uint256 assets = strategy.harvestAndReport();
+        uint256 assets = strategy.harvestAndReport(0);
         // Returns 0 or more — just must not revert
         assertGe(assets, 0);
     }
@@ -309,7 +310,7 @@ contract StrategyInvariantTest is Test {
     function test_INV5_HarvestNeverRevertsWithAssets() public {
         _vaultDeposit(DEPOSIT);
         vm.prank(vault);
-        uint256 assets = strategy.harvestAndReport();
+        uint256 assets = strategy.harvestAndReport(1);
         assertGt(assets, 0, "should report assets after harvest");
     }
 
@@ -338,7 +339,7 @@ contract StrategyInvariantTest is Test {
     function test_OnlyVaultCanHarvest() public {
         vm.expectRevert();
         vm.prank(address(0xDEAD));
-        strategy.harvestAndReport();
+        strategy.harvestAndReport(0);
     }
 
     function test_OnlyGuardianCanTriggerEmergencyExit() public {
@@ -553,7 +554,7 @@ contract CrisisStrategyTest is Test {
         uint256 assetsBefore = strategy.totalAssets();
 
         vm.prank(vault);
-        uint256 assetsAfter = strategy.harvestAndReport();
+        uint256 assetsAfter = strategy.harvestAndReport(1);
 
         assertGt(assetsAfter, assetsBefore, "harvest should increase totalAssets");
         assertGt(strategy.lastHarvestTimestamp(), 0);
@@ -564,7 +565,7 @@ contract CrisisStrategyTest is Test {
         assertEq(strategy.lastHarvestTimestamp(), 0);
 
         vm.prank(vault);
-        strategy.harvestAndReport();
+        strategy.harvestAndReport(1);
 
         assertEq(strategy.lastHarvestTimestamp(), uint40(block.timestamp));
     }

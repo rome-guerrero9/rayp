@@ -409,7 +409,7 @@ contract BullStrategyTest is Test {
         uint256 aWethBefore = aWETH.balanceOf(address(strategy));
 
         vm.prank(vault);
-        strategy.harvestAndReport();
+        strategy.harvestAndReport(1);
 
         assertGt(aWETH.balanceOf(address(strategy)), aWethBefore, "harvest should add supply");
     }

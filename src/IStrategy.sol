@@ -275,10 +275,13 @@ interface IStrategy {
      *           - Update lastHarvestTimestamp on success
      *           - Emit Harvested on success, HarvestFailed on failure
      *
+     * @param  minRewardOut       Keeper-supplied slippage floor for the reward
+     *                             swap. If 0, rewards are claimed but not swapped
+     *                             (deferred to a slippage-protected harvest).
      * @return assetsAfterHarvest  totalAssets() after compounding.
      *                             Equals pre-harvest value if harvest failed.
      */
-    function harvestAndReport() external returns (uint256 assetsAfterHarvest);
+    function harvestAndReport(uint256 minRewardOut) external returns (uint256 assetsAfterHarvest);
 
     // ─── Health and safety ────────────────────────────────────────────────────
 

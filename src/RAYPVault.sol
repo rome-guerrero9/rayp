@@ -71,7 +71,7 @@ interface IStrategy {
     function deposit(uint256 assets, uint256 minDeployedOut) external returns (uint256);
     function withdraw(uint256 assets, address recipient, uint256 minAssetsOut) external returns (uint256);
     function withdrawAll(address recipient, uint256 minAssetsOut) external returns (uint256);
-    function harvestAndReport() external returns (uint256);
+    function harvestAndReport(uint256 minRewardOut) external returns (uint256);
     function healthCheck() external returns (bool healthy, string memory reason);
     function totalAssets() external view returns (uint256);
     function estimatedNetAssets() external view returns (uint256);
@@ -490,7 +490,7 @@ contract RAYPVault is AccessControl, Pausable, ReentrancyGuard {
         // ── Phase 2: harvest fees on old strategy ─────────────────────────────
         // Accrue any pending yield to HWM accounting before exiting
         if (address(oldStrat) != address(0)) {
-            try oldStrat.harvestAndReport() {} catch {} // non-critical
+            try oldStrat.harvestAndReport(0) {} catch {} // non-critical; claim-only (no unprotected swap)
         }
 
         // ── Phase 3: exit old strategy ────────────────────────────────────────
@@ -610,10 +610,10 @@ contract RAYPVault is AccessControl, Pausable, ReentrancyGuard {
      * @notice Trigger a harvest on the active strategy to compound yield,
      *         then optionally harvest protocol fees.
      */
-    function harvestStrategy() external onlyRole(KEEPER_ROLE) nonReentrant {
+    function harvestStrategy(uint256 minRewardOut) external onlyRole(KEEPER_ROLE) nonReentrant {
         IStrategy strat = _activeStrategy();
         if (address(strat) != address(0)) {
-            strat.harvestAndReport();
+            strat.harvestAndReport(minRewardOut);
         }
         // Auto-harvest fees if interval has elapsed
         if (block.timestamp >= lastFeeHarvestAt + FEE_HARVEST_INTERVAL) {
@@ -784,6 +784,4 @@ contract RAYPVault is AccessControl, Pausable, ReentrancyGuard {
         if (balanceOf[owner] < shares) revert InsufficientShares(balanceOf[owner], shares);
         _burn(owner, shares);
     }
-
-    receive() external payable {}
 }

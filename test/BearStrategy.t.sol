@@ -316,7 +316,7 @@ contract BearStrategyTest is Test {
         uint256 aBalBefore = aUSDC.balanceOf(address(strategy));
 
         vm.prank(vault);
-        strategy.harvestAndReport();
+        strategy.harvestAndReport(1);
 
         // Rewards should have been swapped to USDC and re-supplied to Aave
         assertGt(aUSDC.balanceOf(address(strategy)), aBalBefore, "aUSDC should increase after harvest");
