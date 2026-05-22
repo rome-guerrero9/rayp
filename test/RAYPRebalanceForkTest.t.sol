@@ -442,6 +442,14 @@ contract RAYPRebalanceForkTest is Test {
     /// @notice Max divergence between TWAP and spot prices post-rebalance (10 bps).
     uint256 constant MAX_TWAP_SPOT_DIVERGE_BPS   = 10;
 
+    // ── MockRAYPVault storage slots ───────────────────────────────────────────
+    // Verified via `forge inspect MockRAYPVault storageLayout`. Used by vm.store
+    // to manufacture mid-rebalance state that executeRebalance() never leaves
+    // externally observable. Keep in sync if MockRAYPVault's field order changes.
+    uint256 constant SLOT_REBALANCE_LOCK  = 6;
+    uint256 constant SLOT_STRATEGY_ASSETS = 7;
+    uint256 constant SLOT_TRANSIT_ASSETS  = 8;
+
     // ─────────────────────────────────────────────────────────────────────────
 
     function setUp() public {
@@ -522,17 +530,17 @@ contract RAYPRebalanceForkTest is Test {
         // Manually simulate Phase 1 state (as if execution paused mid-rebalance)
         vm.store(
             address(vault),
-            bytes32(uint256(3)),  // strategyAssets slot
+            bytes32(SLOT_STRATEGY_ASSETS),
             bytes32(uint256(0))
         );
         vm.store(
             address(vault),
-            bytes32(uint256(4)),  // transitAssets slot
+            bytes32(SLOT_TRANSIT_ASSETS),
             bytes32(uint256(VAULT_SEED + DEPOSIT_AMOUNT))
         );
         vm.store(
             address(vault),
-            bytes32(uint256(2)),  // rebalanceLock slot
+            bytes32(SLOT_REBALANCE_LOCK),
             bytes32(uint256(1))   // locked = true
         );
 
@@ -654,7 +662,7 @@ contract RAYPRebalanceForkTest is Test {
 
     function test_E_DepositWithdrawLockedDuringRebalance() public {
         // Manually set lock state
-        vm.store(address(vault), bytes32(uint256(2)), bytes32(uint256(1)));
+        vm.store(address(vault), bytes32(SLOT_REBALANCE_LOCK), bytes32(uint256(1)));
         assertTrue(vault.rebalanceLock());
 
         // maxDeposit must return 0 when locked (ERC-4626 spec: deposit MUST revert if > maxDeposit)
@@ -672,7 +680,7 @@ contract RAYPRebalanceForkTest is Test {
         vault.withdraw(0.5 ether, alice, alice);
 
         // ── Unlock and verify normal operation resumes ────────────────────
-        vm.store(address(vault), bytes32(uint256(2)), bytes32(uint256(0)));
+        vm.store(address(vault), bytes32(SLOT_REBALANCE_LOCK), bytes32(uint256(0)));
 
         assertGt(vault.maxDeposit(alice), 0);
         assertGt(vault.maxWithdraw(alice), 0);
@@ -693,9 +701,9 @@ contract RAYPRebalanceForkTest is Test {
         uint256 collateralValueBefore = oracleAdapter.getAssetPrice(address(vault));
 
         // Simulate mid-rebalance dip (lock + zero strategy assets)
-        vm.store(address(vault), bytes32(uint256(2)), bytes32(uint256(1))); // lock
-        vm.store(address(vault), bytes32(uint256(3)), bytes32(uint256(0))); // strategyAssets = 0
-        vm.store(address(vault), bytes32(uint256(4)), bytes32(uint256(VAULT_SEED + DEPOSIT_AMOUNT))); // transit
+        vm.store(address(vault), bytes32(SLOT_REBALANCE_LOCK), bytes32(uint256(1))); // lock
+        vm.store(address(vault), bytes32(SLOT_STRATEGY_ASSETS), bytes32(uint256(0))); // strategyAssets = 0
+        vm.store(address(vault), bytes32(SLOT_TRANSIT_ASSETS), bytes32(uint256(VAULT_SEED + DEPOSIT_AMOUNT))); // transit
 
         uint256 spotPriceDuringDip   = oracleAdapter.getSpotAssetPrice(address(vault));
         uint256 twapPriceDuringDip   = oracleAdapter.getAssetPrice(address(vault));
@@ -771,7 +779,7 @@ contract RAYPRebalanceForkTest is Test {
 
         // Step 2: rebalance starts - lock engages
         // (Simulate mid-rebalance lock state)
-        vm.store(address(vault), bytes32(uint256(2)), bytes32(uint256(1)));
+        vm.store(address(vault), bytes32(SLOT_REBALANCE_LOCK), bytes32(uint256(1)));
 
         // Step 3: mevBot tries to withdraw during the dip window → BLOCKED
         vm.prank(mevBot);
@@ -779,7 +787,7 @@ contract RAYPRebalanceForkTest is Test {
         vault.withdraw(mevAssetsBefore, mevBot, mevBot);
 
         // Step 4: rebalance completes (with slippage)
-        vm.store(address(vault), bytes32(uint256(2)), bytes32(uint256(0)));
+        vm.store(address(vault), bytes32(SLOT_REBALANCE_LOCK), bytes32(uint256(0)));
         vm.prank(keeper);
         vault.executeRebalance(1, 2, 30, 0);
 
