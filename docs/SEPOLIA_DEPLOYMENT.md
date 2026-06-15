@@ -1,161 +1,51 @@
-# Arbitrum Sepolia Deployment
+# RAYP Arbitrum Sepolia Deployment
 
-**Status:** Unverified. Addresses below are placeholders until you complete the recovery procedure.
+**Date:** 2026-04-17
+**Chain:** Arbitrum Sepolia (421614)
+**Deployer:** 0x9F4BE17689018e8e56c225d4E5D775E917C7f815
+**Explorer:** https://sepolia.arbiscan.io
 
-The deploy script is `script/DeployRAYPSepolia.s.sol`. It creates 12 contracts (4 mocks + 8 production) in a fixed order from a single deployer EOA, all in one broadcast.
+## Protocol Contracts
 
----
+| Contract | Address |
+|---|---|
+| RAYPVault | `0x8739d8101e8f9cebe5d62a075b132ebd12a0b4d5` |
+| OracleAggregator | `0x4dedaeab1063ec4867dcd6902b4e5d7298fb0b9f` |
+| RegimeDampener | `0x596281184591df85cee239c7251c836c3efb620d` |
+| KeeperRegistry | `0xf37d3d6fba95bf6f7c59150ee2b1987b52f4f2b9` |
+| NeutralStrategy (Regime 0) | `0xb560af59d20089f69cd9d505b5dccc374d423cf0` |
+| BullStrategy (Regime 1) | `0x88a67b3a8bbd3ffb16ff5f343e9edaeb1b439f1a` |
+| BearStrategy (Regime 2) | `0xa3938b1bd61b64b7a8ce6e05c175218afd9ead26` |
+| CrisisStrategy (Regime 3) | `0x3186c7485e812e1af6ec6f778c26aaa03f25355a` |
 
-## Production contracts
+## Mock Contracts (testnet only)
 
-| # | Contract | Address | Arbiscan |
-|---|---|---|---|
-| 1 | RAYPVault | `TODO` | TODO |
-| 2 | OracleAggregator | `TODO` | TODO |
-| 3 | RegimeDampener | `TODO` | TODO |
-| 4 | KeeperRegistry | `TODO` | TODO |
-| 5 | NeutralStrategy | `TODO` | TODO |
-| 6 | BullStrategy | `TODO` | TODO |
-| 7 | BearStrategy | `TODO` | TODO |
-| 8 | CrisisStrategy | `TODO` | TODO |
+| Contract | Address |
+|---|---|
+| MockERC20 (ARB) | `0x8e7b7b5f2fa3930dd81a245642bcb1d049a7e917` |
+| MockChainlinkAggregator (vol) | `0x1bb7ddca70fe0d6b52b556b7846e4fb8846a61f0` |
+| MockChainlinkAggregator (funding) | `0x09e8e4aca09fe7d60681d4b5c30b9f4ea4966676` |
+| MockPyth | `0x13538739894475bd4f6a0a04b156fd047fb684a4` |
 
-## Mocks (testnet only — not for mainnet reference)
+## External Dependencies (Arbitrum Sepolia)
 
-| # | Contract | Address | Notes |
-|---|---|---|---|
-| 1 | MockERC20 (mARB) | `TODO` | Mock ARB reward token |
-| 2 | MockChainlinkAggregator (vol) | `TODO` | Volatility feed mock |
-| 3 | MockChainlinkAggregator (funding) | `TODO` | Funding rate feed mock |
-| 4 | MockPyth | `TODO` | Pyth oracle mock |
+| Contract | Address |
+|---|---|
+| Aave v3 Pool | `0xBfC91D59fdAA134A4ED45f7B584cAf96D7792Eff` |
+| Aave v3 Rewards | `0x3A203B14CF8749a1e3b7314c6c49004B77Ee667A` |
+| Uniswap V3 Router | `0x101F443B4d1b059569D643917553c771E1b9663E` |
+| WETH | `0x1dF462e2712496373A347f8ad10802a5E95f053D` |
+| USDC | `0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d` |
+| Chainlink ETH/USD | `0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165` |
 
-## Deployer
+## Roles
 
-- EOA: `TODO` (candidate `0x9F4BE17689018e8e56c225d4E5D775E917C7f815` — confirm before trusting)
-- Date of deploy: `TODO` (claimed 2026-04-17)
-- Deploy tx batch: `TODO` (Arbiscan link to filtered tx list)
+- **Admin / Guardian / Treasury:** Deployer (0x9F4BE17689018e8e56c225d4E5D775E917C7f815)
+- **KEEPER_ROLE:** KeeperRegistry (0xf37d3d6fba95bf6f7c59150ee2b1987b52f4f2b9)
 
----
+## Verified State
 
-## Recovery procedure
-
-The Arbiscan UI and the public Arbitrum Sepolia RPC are not reachable from this sandbox, so address recovery has to run on your machine. Run the steps below locally and paste the resulting addresses into the tables above.
-
-### Step 0 — Confirm the deployer EOA
-
-```bash
-# If you still have the .env / DEPLOYER_PRIVATE_KEY for the original deploy:
-cast wallet address $DEPLOYER_PRIVATE_KEY
-
-# Or, if the key is in a wallet (MetaMask/Frame), copy the address from there.
-```
-
-### Step 1 — Pull tx history for the deployer
-
-Two equivalent paths; pick whichever you have credentials for.
-
-**Option A — Arbiscan API (needs free API key):**
-
-```bash
-DEPLOYER=0x9F4BE17689018e8e56c225d4E5D775E917C7f815   # replace with confirmed value
-ARBISCAN_KEY=YourArbiscanApiKey
-
-curl -sS "https://api-sepolia.arbiscan.io/api?module=account&action=txlist\
-&address=${DEPLOYER}&startblock=0&endblock=99999999&sort=asc&apikey=${ARBISCAN_KEY}" \
-  | jq '.result[] | select(.to == "") | {hash, blockNumber, timeStamp, contractAddress}'
-```
-
-This prints every contract-creation tx the EOA ever made, in chronological order.
-
-**Option B — Direct RPC (no API key needed):**
-
-```bash
-DEPLOYER=0x9F4BE17689018e8e56c225d4E5D775E917C7f815
-RPC=https://sepolia-rollup.arbitrum.io/rpc
-
-# Total tx count:
-cast nonce --rpc-url $RPC $DEPLOYER
-
-# For each nonce N from 0 to (count - 1), the resulting contract address (if it
-# was a create) is deterministic via CREATE:
-for N in $(seq 0 11); do
-  cast compute-address --nonce $N $DEPLOYER
-done
-```
-
-The CREATE-address derivation only works if the deployer hasn't sent any non-create txs interleaved with the deploys. If they did, use Option A instead — `txlist` returns the actual `contractAddress` for each create.
-
-### Step 2 — Map creations to contract names
-
-The 12 creations come out in this exact order (from `script/DeployRAYPSepolia.s.sol`):
-
-1. MockERC20 (mARB) — line 177
-2. MockChainlinkAggregator (vol feed) — line 181
-3. MockChainlinkAggregator (funding feed) — line 189
-4. MockPyth — line 197
-5. **RAYPVault** — line 210
-6. **OracleAggregator** — line 232
-7. **RegimeDampener** — line 252
-8. **KeeperRegistry** — line 266
-9. **NeutralStrategy** — line 280
-10. **BullStrategy** — line 294
-11. **BearStrategy** — line 312
-12. **CrisisStrategy** — line 328
-
-### Step 3 — Tie-break by bytecode metadata hash (only if needed)
-
-If two creations have the same timestamp or you suspect an out-of-order anomaly, match the on-chain runtime bytecode against the local artifact:
-
-```bash
-forge build
-
-CONTRACT=RAYPVault   # repeat per contract
-LOCAL=$(jq -r '.deployedBytecode.object' out/${CONTRACT}.sol/${CONTRACT}.json)
-ONCHAIN=$(cast code --rpc-url $RPC $CANDIDATE_ADDRESS)
-
-# Compare the trailing IPFS metadata hash (last ~100 bytes):
-echo "${LOCAL: -100}"
-echo "${ONCHAIN: -100}"
-```
-
-The metadata hashes will match exactly. The non-metadata prefix differs because the constructor immutables (admin, treasury, oracle wiring) get baked in.
-
-### Step 4 — Verify each contract on Arbiscan
-
-Once you've matched addresses to names:
-
-```bash
-forge verify-contract \
-  --chain arbitrum-sepolia \
-  --watch \
-  --etherscan-api-key $ARBISCAN_KEY \
-  $RAYP_VAULT_ADDRESS \
-  src/RAYPVault.sol:RAYPVault
-```
-
-Repeat for the other seven production contracts. Mocks don't need verification.
-
-### Step 5 — Update this file
-
-Paste the recovered addresses into the tables above, fill in the deployer EOA and deploy date, and commit:
-
-```bash
-git add docs/SEPOLIA_DEPLOYMENT.md
-git commit -m "docs: record recovered Sepolia addresses"
-```
-
----
-
-## Fallback — fresh deploy
-
-If Step 1 returns zero contract creations from the candidate deployer, the 2026-04-17 deploy never happened (or used a different key you've lost). Redeploy:
-
-```bash
-export DEPLOYER_PRIVATE_KEY=0x...
-forge script script/DeployRAYPSepolia.s.sol:DeployRAYPSepolia \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
-  --broadcast \
-  --verify \
-  --etherscan-api-key $ARBISCAN_KEY
-```
-
-`--verify` runs verification automatically post-deploy. The resulting `broadcast/DeployRAYPSepolia.s.sol/421614/run-latest.json` has the canonical address record — copy it back into this file.
+- Active regime: 0 (NEUTRAL)
+- All 4 strategies registered
+- KeeperRegistry has KEEPER_ROLE
+- RegimeDampener wired to vault
