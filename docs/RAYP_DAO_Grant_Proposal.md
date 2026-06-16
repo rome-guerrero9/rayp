@@ -20,8 +20,6 @@ RAYP is a decentralised ERC-4626 vault protocol on Arbitrum that autonomously de
 | Calmar Ratio | 1.13 | 2.42 |
 | Annualised Return | 91.8% | 135.8% |
 | Annualised Volatility | 82.6% | 72.1% |
-| Sharpe Ratio | 1.06 | 1.83 |
-| Calmar Ratio | 1.13 | 2.42 |
 
 **Crisis detection: 4 for 4** on major ETH drawdowns:
 - COVID March 2020: detected 15 hours before trough
@@ -172,7 +170,7 @@ The following milestones are proposed for the Arbitrum LTIPP 12-week programme. 
 
 | Week | Milestone | Deliverable | Verification |
 |------|-----------|-------------|--------------|
-| 1-2 | Testnet deployment | Full protocol stack live on Arbitrum Sepolia | Contract addresses published, all functions callable |
+| 1-2 | Sepolia operational demo | Already-live Sepolia stack (deployed April 2026) publicly documented with addresses, classifier walk-through, and a recorded transaction demo for committee review | `docs/SEPOLIA_DEPLOYMENT.md` published + demo video |
 | 3-4 | Code4rena audit submission | Audit contest launched | Public Code4rena contest page |
 | 4-6 | Audit remediation | All critical/high findings fixed, re-tested | Git commits + updated test suite |
 | 6-7 | Mainnet deployment | All contracts deployed to Arbitrum One | Verified on Arbiscan |
@@ -219,7 +217,7 @@ The following milestones are proposed for the Arbitrum LTIPP 12-week programme. 
 
 | Category | ARB Allocation | Purpose |
 |----------|---------------|---------|
-| Code4rena audit | 60,000 ARB | Competitive audit contest (~$15-25K equivalent) |
+| Code4rena audit | 60,000 ARB | Funds the competitive audit contest scoped in `docs/AUDIT_SCOPE.md` (~3,020 nSLOC across 11 contracts); ARB amount sized to cover Code4rena's contest budget for this nSLOC tier |
 | Keeper incentives | 50,000 ARB | Bootstrap keeper network for first 90 days |
 | LP incentives | 50,000 ARB | Early depositor rewards during TVL cap phase |
 | Infrastructure | 20,000 ARB | RPC nodes, oracle infrastructure, monitoring |
@@ -227,7 +225,9 @@ The following milestones are proposed for the Arbitrum LTIPP 12-week programme. 
 
 All ARB distributed to keepers and LPs is tracked on-chain and reported monthly. No ARB allocated to team equity or token buybacks.
 
-### 8.2 Optimism RPGF -- 500,000 OP requested
+### 8.2 Optimism Retro Funding -- 500,000 OP requested
+
+*(Targeting the current Optimism Retro Funding round administered by the Citizens' House; submitted in parallel with this Arbitrum LTIPP application.)*
 
 | Category | OP Allocation | Purpose |
 |----------|--------------|---------|
@@ -278,7 +278,7 @@ Security review and audit oversight will be conducted through Code4rena. The fou
 
 1. Does the committee prefer a single 200K ARB allocation or a phased release tied to milestone completion? RAYP is open to milestone-gated tranches.
 2. Is there an existing Arbitrum DAO treasury working group that RAYP should brief on the regime-adaptive treasury management use case?
-3. For Optimism RPGF: does the committee consider production-ready smart contract libraries a qualifying public good, or is community education output weighted more heavily?
+3. For Optimism Retro Funding: does the committee consider production-ready smart contract libraries a qualifying public good, or is community education output weighted more heavily?
 4. Would the committee recommend a co-application with an existing Arbitrum-native protocol (e.g. Aave, Uniswap) to de-risk the integration milestones?
 
 ---
@@ -322,7 +322,7 @@ Key contracts:
 
 ### D. Grant programme alignment
 
-This proposal targets **Arbitrum LTIPP** (Long-Term Incentive Pilot Programme), which funds ecosystem-building work over 12-week periods. It simultaneously targets **Optimism RPGF Round 4** for open-source public goods output. The two grants are complementary, not overlapping: LTIPP funds Arbitrum-specific deployment and incentives; RPGF funds chain-agnostic open-source contributions.
+This proposal targets **Arbitrum LTIPP** (Long-Term Incentive Pilot Programme), which funds ecosystem-building work over 12-week periods. It simultaneously targets **Optimism Retro Funding** (Citizens' House, current round) for open-source public goods output. The two grants are complementary, not overlapping: LTIPP funds Arbitrum-specific deployment and incentives; Retro Funding funds chain-agnostic open-source contributions.
 
 ---
 

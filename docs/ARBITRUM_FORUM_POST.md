@@ -132,7 +132,7 @@ Full Python backtest published at [github.com/rome-guerrero9/rayp-backtest](http
 
 | Week | Milestone | Verification |
 |------|-----------|--------------|
-| 1-2 | Testnet deployment on Arbitrum Sepolia | Contract addresses published on forum |
+| 1-2 | Sepolia operational demo (deploy already complete, April 2026) | Addresses published in this thread + recorded classifier walk-through |
 | 3-4 | Code4rena audit submission | Public contest page live |
 | 4-6 | Audit remediation (all C/H findings fixed) | Git commits + updated test suite |
 | 6-7 | Mainnet deployment | Verified on Arbiscan |
