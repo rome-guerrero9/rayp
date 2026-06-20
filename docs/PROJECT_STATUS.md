@@ -2,7 +2,7 @@
 
 **Canonical state of record.** Read this at the start of every session, edit at the end of every milestone. Anything not in this file (or another committed doc it links to) does not exist as far as this project is concerned.
 
-Last updated: 2026-06-16 — off-record drafts consolidated into `docs/`; cleanup pass on known-unknowns and open work items.
+Last updated: 2026-06-16 — multisig verified on-chain (2-of-3); third recovery owner added.
 
 ---
 
@@ -15,7 +15,7 @@ Last updated: 2026-06-16 — off-record drafts consolidated into `docs/`; cleanu
 | Arbitrum Sepolia deployment | Deployed 2026-04-17 — see `SEPOLIA_DEPLOYMENT.md` |
 | Sepolia source verification on Arbiscan | Not done — `forge verify-contract` pending per contract |
 | Arbitrum One mainnet deployment | Not deployed |
-| Multisig (Arbitrum One Safe) | Candidate address recorded — **on-chain verification pending** (see `MULTISIG.md`) |
+| Multisig (Arbitrum One Safe) | **Verified 2-of-3** on-chain 2026-06-16 — see `MULTISIG.md` |
 | Audit scope document | Committed — `AUDIT_SCOPE.md` |
 | Audit cover email | Committed — `AUDIT_COVER_EMAIL.md` |
 | Audit submission | **Unconfirmed** — claimed sent 2026-04-20 but no thread URL / firm response in repo |
@@ -49,7 +49,7 @@ docs/                    — This file and related artifacts (see below)
 | `PROJECT_STATUS.md` | This file — canonical state | Current |
 | `SESSION_PLAYBOOK.md` | Start/end-of-session ritual | Current |
 | `SEPOLIA_DEPLOYMENT.md` | Recorded Sepolia addresses + role mapping | Current |
-| `MULTISIG.md` | Safe address + verification checklist | **Pending on-chain verification** |
+| `MULTISIG.md` | Safe address + owner set + verification record | Verified 2026-06-16 |
 | `AUDIT_SCOPE.md` | Audit scope, threat model, invariants | Current |
 | `AUDIT_COVER_EMAIL.md` | Outbound email for audit firm | Current |
 | `ARBITRUM_FORUM_POST.md` | LTIPP forum draft | Ready to publish |
@@ -62,10 +62,9 @@ docs/                    — This file and related artifacts (see below)
 
 The items below are still off-record and must be confirmed before any public commitment depends on them:
 
-1. **Arbitrum One Safe.** Address `0xa7a8Eb8FF9dD7481b62BC6900F4e331BacBe638d` is referenced in three drafts but not yet confirmed on-chain to be a deployed 2-of-3 Safe with the expected owners. See `MULTISIG.md` for the verification commands. Blocks: grant submission, mainnet deploy.
-2. **Audit submission record.** A submission to Code4rena / Sherlock was claimed for 2026-04-20 but no thread URL, contest page, or firm response is in the repo. Treat as **not submitted** until a thread URL is found. The committed `AUDIT_COVER_EMAIL.md` is a *draft* of the outreach, not evidence it was sent.
-3. **Mirror post URL.** If a Mirror post about RAYP exists, its URL is unrecorded. If it doesn't exist, delete `docs/MIRROR_POST.md` and note "Mirror: never published" here.
-4. **Pre-mainnet admin custody.** `SEPOLIA_DEPLOYMENT.md` records the deployer EOA as admin / guardian / treasury on testnet. This is fine for Sepolia but **must not carry to mainnet** — mainnet roles must be granted to the verified Safe at deploy time, not transferred post-deploy. Track as a hard gate in the mainnet checklist.
+1. **Audit submission record.** A submission to Code4rena / Sherlock was claimed for 2026-04-20 but no thread URL, contest page, or firm response is in the repo. Treat as **not submitted** until a thread URL is found. The committed `AUDIT_COVER_EMAIL.md` is a *draft* of the outreach, not evidence it was sent.
+2. **Mirror post URL.** If a Mirror post about RAYP exists, its URL is unrecorded. If it doesn't exist, delete `docs/MIRROR_POST.md` and note "Mirror: never published" here.
+3. **Pre-mainnet admin custody.** `SEPOLIA_DEPLOYMENT.md` records the deployer EOA as admin / guardian / treasury on testnet. This is fine for Sepolia but **must not carry to mainnet** — mainnet roles must be granted to the verified Safe at deploy time, not transferred post-deploy. Track as a hard gate in the mainnet checklist.
 
 ---
 
@@ -75,9 +74,8 @@ In rough dependency order. Mirror substantive ones as GitHub Issues so they surv
 
 ### Immediate (this week)
 
-1. **Verify the Safe on-chain.** Run the two `cast call` commands in `MULTISIG.md` against Arbitrum One. If threshold + owners match expectations, flip `MULTISIG.md` to verified and remove caveats here. If they don't match, treat the address as unsafe and re-derive.
-2. **Resolve the audit-submission ambiguity.** Search email for any 2026-04-20 outreach to Code4rena / Sherlock. If found, paste the thread URL into `AUDIT_SCOPE.md` §"Submission record". If not found, assume not submitted and send `AUDIT_COVER_EMAIL.md` cleanly.
-3. **Run `forge test` on a clean checkout** and confirm the "214 passing, 0 failing" number in `AUDIT_SCOPE.md` and the grant proposal. Update both if the count has drifted.
+1. **Resolve the audit-submission ambiguity.** Search email for any 2026-04-20 outreach to Code4rena / Sherlock. If found, paste the thread URL into `AUDIT_SCOPE.md` §"Submission record". If not found, assume not submitted and send `AUDIT_COVER_EMAIL.md` cleanly.
+2. **Run `forge test` on a clean checkout** and confirm the "214 passing, 0 failing" number in `AUDIT_SCOPE.md` and the grant proposal. Update both if the count has drifted.
 
 ### Pre-mainnet sequence
 
@@ -96,6 +94,7 @@ In rough dependency order. Mirror substantive ones as GitHub Issues so they surv
 
 ## Recent activity (newest first)
 
+- 2026-06-16 — Arbitrum One Safe verified on-chain as 2-of-3. Pre-verification state was 2-of-2; added `0x6aeDf63D…bb50` as a third recovery owner via Safe UI before flipping the doc to verified. Owner set, threshold, and cast-call evidence now recorded in `MULTISIG.md`.
 - 2026-06-16 — Off-record drafts consolidated into `docs/` (forum post, audit scope, cover email, grant proposal, Sepolia deployment record). Four pre-submission fixes applied to grant proposal + forum post: deduped table, recast Week 1-2 milestone since Sepolia is already live, dropped contradictory USD audit estimate, renamed "RPGF Round 4" → "Optimism Retro Funding". PR #1 carries all of this.
 - 2026-04-17 — Arbitrum Sepolia deploy: 12 contracts (8 production + 4 mocks). Deployer EOA `0x9F4B…f815` holds admin / guardian / treasury roles on testnet.
 - 2026-04-22 — Latest commit on master before this consolidation (`37d35ce`): regime signal bot + daily GH Actions cron.
